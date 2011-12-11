@@ -7,6 +7,9 @@ setup(
 	package_dir = {'': 'src'},
 	install_requires = [
 		'setuptools',
-		'requests',
 	],
+	entry_points = """
+	[console_scripts]
+	run = trends.kickstart:main
+	""",
 )
