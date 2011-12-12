@@ -83,25 +83,27 @@ class Collection:
 
 class Listener(threading.Thread):
 
-	def __init__(self):
+	def __init__(self, terminate_please):
 		super(Listener, self).__init__()
+		self.terminate_please = terminate_please
 
 	def run(self):
 		print "Thread Listener"
-		
+
 		try:
 			stream = Stream.get()
 		except urllib2.URLError:
 			print "Thread Listener: Error connecting to Twitter API"
 
-		"""
-		stream = Stream.get()
-		line = stream.readline()
-		print line
-		while line:
+		# Going to do some actual work
+		self.work(stream)	   
+
+		print "Thread Listener: Terminating"
+
+	def work(self, stream):
+		 # As long as termination hasn't been asked
+		while not self.terminate_please.isSet():
+			line = stream.readline()
 			dic = json.loads(line.decode('utf-8'))
 			tweet = Tweet(**dic)
-			tweet.process()
-
-			line = stream.readline()
-		"""
+			tweet.process()      
