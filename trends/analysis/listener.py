@@ -1,8 +1,8 @@
 from trends.api.stream import Stream
 import json
-
 import threading
 import urllib2
+import os, signal
 
 class Tweet:
 
@@ -65,13 +65,9 @@ class Collection:
 		"""
 		Increases the frequency of token ``token``
 		"""
-   		freq = cls._tokens.get(token, None)
-		if freq:
-			cls._tokens[token] = freq + 1
-		else:
-			cls._tokens[token] = 1
-	
-	
+		freq = cls._tokens.setdefault(token, 0)
+		cls._tokens[token] = freq + 1
+
 	@classmethod
 	def load(cls, redis_instance):
 		"""
@@ -87,16 +83,33 @@ class Listener(threading.Thread):
 		super(Listener, self).__init__()
 		self.terminate_please = terminate_please
 
+	def request_termination(self):
+		"""
+		In case an error has occured, this method will handle graceful
+		termination.
+		"""
+		print "Thread Listener: Signaling Termination"
+		# Generating SIGINT
+		os.kill(os.getpid(), signal.SIGINT)
+		
+
 	def run(self):
 		print "Thread Listener"
 
 		try:
 			stream = Stream.get()
+
 		except urllib2.URLError:
 			print "Thread Listener: Error connecting to Twitter API"
+			self.request_termination()
 
-		# Going to do some actual work
-		self.work(stream)	   
+		# Got the stream successfully. Let's get down to business
+		else:
+			try:
+				# Going to do some actual work
+				self.work(stream)
+			except:
+				self.request_termination()
 
 		print "Thread Listener: Terminating"
 
@@ -104,6 +117,13 @@ class Listener(threading.Thread):
 		 # As long as termination hasn't been asked
 		while not self.terminate_please.isSet():
 			line = stream.readline()
+
+			if not line:
+				# TODO: Raise custom exception (or is there already some
+				# relevant), and capture it in the try/except block.
+				raise Exception
+
 			dic = json.loads(line.decode('utf-8'))
 			tweet = Tweet(**dic)
 			tweet.process()      
+

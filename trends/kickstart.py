@@ -19,6 +19,9 @@ def main():
 	captures the SIGINT signal, and sets an Event. The worker threads
 	detect that the Event is set, and terminate.
 
+	If a worker thread terminates prematurely, it will generate a SIGINT
+	signal. The signal will be captured by the main thread, which will handle
+	the graceful termination of all threads.
 	"""
 
 	# Create and start threads
@@ -34,9 +37,11 @@ def main():
 	# Pause and wait for Ctrl-C
 	signal.pause()
 	
-	print "Main Thread: Waiting for worker threads to finish"
+	print "Main Thread: Waiting for (remaining) worker threads to finish"
 	for worker in workers:
-		worker.join()
+		# If the thread hasn't already finished
+		if worker:
+			worker.join()
 	print "Main Thread: Terminating"
 
 	
