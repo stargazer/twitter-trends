@@ -17,3 +17,5 @@ develop-eggs/
 parts/
 SOURCES.txt
 egg-info/
+credentials.py
+
