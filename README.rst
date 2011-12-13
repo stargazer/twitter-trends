@@ -34,7 +34,7 @@ Architecture
 
         * ``text``: Tweet text 
 
-        * ``get_tokens``: Analyzes the ``text`` and returns its tokens.
+        * ``get_tokens()``: Analyzes the ``text`` and returns its tokens.
 
     * ``trends.analysis.listener.Listener``: Facilitates the Stream class,
       to retrieve data from the Twitter API.
