@@ -26,11 +26,16 @@ def main():
 
 	# Create and start threads
 	workers = (
-		Listener(terminate_please),   	# Listen to the Streaming API
 		Statistician(terminate_please), # Compute statistics about data
+		Listener(terminate_please),   	# Listen to the Streaming API
 	)
+
+	# It's possible that one threads starts and terminates, before the second
+	# one even starts. So we need to check if the termination flag has been
+	# set, before starting the threads.
 	for worker in workers:
-		worker.start()
+		if not terminate_please.isSet():
+			worker.start()
 
     # Register handling of Ctrl-C
 	signal.signal(signal.SIGINT, do_exit)
@@ -40,7 +45,7 @@ def main():
 	print "Main Thread: Waiting for (remaining) worker threads to finish"
 	for worker in workers:
 		# If the thread hasn't already finished
-		if worker:
+		if worker.isAlive():
 			worker.join()
 	print "Main Thread: Terminating"
 
