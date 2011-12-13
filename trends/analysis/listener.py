@@ -1,5 +1,4 @@
-from trends.api.stream import Stream
-import json
+from trends.api.stream import Stream, Tweet
 import threading
 import urllib2
 import os, signal
@@ -85,20 +84,24 @@ class Listener(threading.Thread):
 
 	def request_termination(self):
 		"""
-		In case an error has occured, this method will handle graceful
-		termination.
+		In any case that the thread can't keep on doing its work, and needs to
+		terminate, we SHOULD end up here. This method will make sure that the
+		main thread gets a termination signal, and from that point on, will
+		handle termination of the remaining threads.
 		"""
 		print "Thread Listener: Signaling Termination"
 		# Generating SIGINT
 		os.kill(os.getpid(), signal.SIGINT)
+		self.stream.close()
 		
 
 	def run(self):
 		print "Thread Listener"
 
-		try:
-			stream = Stream.get()
+		self.stream = Stream()
 
+		try:
+			self.stream.connect()
 		except urllib2.URLError:
 			print "Thread Listener: Error connecting to Twitter API"
 			self.request_termination()
@@ -107,23 +110,21 @@ class Listener(threading.Thread):
 		else:
 			try:
 				# Going to do some actual work
-				self.work(stream)
-			except:
+				self.work()
+			except (EOFError, IOError):
 				self.request_termination()
 
 		print "Thread Listener: Terminating"
 
-	def work(self, stream):
+	def work(self):
 		 # As long as termination hasn't been asked
 		while not self.terminate_please.isSet():
-			line = stream.readline()
+			try:
+				tweet = self.stream.get_tweet()
 
-			if not line:
-				# TODO: Raise custom exception (or is there already some
-				# relevant), and capture it in the try/except block.
-				raise Exception
+				tokens = tweet.get_tokens()
+				for token in tokens:
+					Collection.add(token)
 
-			dic = json.loads(line.decode('utf-8'))
-			tweet = Tweet(**dic)
-			tweet.process()      
-
+			except (EOFError, IOError): 
+				raise
