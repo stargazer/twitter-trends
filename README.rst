@@ -44,8 +44,8 @@ Architecture
     * ``trends.analysis.listener.Collection``: Wrapper around the data
       structure that will store token appearances in tweets.
 
-    * ``_tokens``: Dictionary that stores pairs of `token`:`no. of
-      appearances`
+        * ``_tokens``: Dictionary that stores pairs of `token`:`no. of
+          appearances`
 
     * ``trends.analysis.statisticia.Statistician``: Analyzes the ``Collection`` and computes statistics.
 
