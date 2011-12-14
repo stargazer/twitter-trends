@@ -56,19 +56,20 @@ Diagram
 
 
                                 --------------
-               --------------     Main Thread   -----------
+               +---------------  Main Thread   -----------+
                |                ---------------           |
                |                                          |
                |                                          |
+               +                                          +
        ----------------                          --------------------
         Listener Thread                          Statistician Thread
-       ---------------                           --------------------
-          Stream   <--------------                    Collection 
-          Collection             |                  
-                                 |
-                                 |
-                                 |
-                            Twitter API
+       ----------------                          --------------------
+          Stream   <-----------------+               Collection 
+          Collection                 |                  
+                                     |
+                                     |
+                                     |
+                                 Twitter API
             
 
 
