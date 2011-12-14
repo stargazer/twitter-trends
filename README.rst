@@ -50,14 +50,15 @@ Architecture
     * ``trends.analysis.statisticia.Statistician``: Analyzes the ``Collection`` and computes statistics.
 
 
-
+Diagram
+----------
+::
 
 
 
                                 -- Main Thread --
 
-
-
+            --------------                              ------------------
             -- Listener --          Twitter API         -- Statistician --
 
              ``Stream`` -----------------|                   
