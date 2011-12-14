@@ -54,17 +54,14 @@ Architecture
 
 
 
-                                ------------------
-                                   Main Thread
-                                ------------------
+                                -- Main Thread --
 
 
 
-            ---------------                              -------------                                  
-               Listener           Twitter API            Statistician
-            ---------------           |                  -------------
-               Stream ----------------|                   
-               Collection                                 Collection
+            -- Listener --          Twitter API         -- Statistician --
+
+             ``Stream`` -----------------|                   
+             ``Collection``                               ``Collection``
 
 
                             
