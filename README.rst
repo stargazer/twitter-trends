@@ -55,17 +55,20 @@ Diagram
 ::
 
 
-
-                                -- Main Thread --
-
-            --------------                              ------------------
-            -- Listener --          Twitter API         -- Statistician --
-
-             ``Stream`` -----------------|                   
-             ``Collection``                               ``Collection``
-
-
-                            
+                                --------------
+               --------------     Main Thread   -----------
+               |                ---------------           |
+               |                                          |
+               |                                          |
+       ----------------                          --------------------
+        Listener Thread                          Statistician Thread
+       ---------------                           --------------------
+          Stream   <--------------                    Collection 
+          Collection             |                  
+                                 |
+                                 |
+                                 |
+                            Twitter API
             
 
 
