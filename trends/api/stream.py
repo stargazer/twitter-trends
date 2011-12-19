@@ -5,6 +5,7 @@ import contextlib
 import json     
 import socket
 from ssl import SSLError
+from sets import Set
 
 class Stream:
 	URL = 'https://stream.twitter.com/1/statuses/sample.json'
@@ -92,6 +93,13 @@ class Tweet:
 	def __init__(self, **kwargs):
 		self.text = kwargs.get('text', None)
 
+
+	#TODO:
+    # If it has a stop sign in the middle, reject it
+	# If it has stop sign(s) in the start or end, remove them
+	# 	If all else is file, keep it
+	# If it starts with 'http://' remove the 'http://'
+
 	def get_tokens(self):
 		"""
 		Split into tokens, 
@@ -100,7 +108,9 @@ class Tweet:
 		with frequencies
 
 		"""
-		final_tokens = []
+		# Using a set, so that we only count once every token, for every tweet.
+		final_tokens = Set()
+
 		if self.text:
 			initial_tokens = self.text.split()
 
@@ -117,9 +127,9 @@ class Tweet:
 					token = token[0:-1]
 
 				try:				
-					final_tokens.append(token.lower())
+					final_tokens.add(token.lower())
 				except:
-					final_tokens.append(token)
+					final_tokens.add(token)
 		return final_tokens
 
 		
