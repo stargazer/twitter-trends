@@ -23,7 +23,7 @@ class Statistician(threading.Thread):
 		while not self.terminate_please.isSet():
 			cv = threading.Condition()
 			cv.acquire()
-			cv.wait(60)
+			cv.wait(180)
 
 			refresh()
 			
@@ -128,9 +128,10 @@ class Stats:
 				pass
 			print "\n"
 
+		
 		# Zero the score and observation
-		#for token, stats in items:
-		#	cls._scores[token].zero()
+		for token, stats in items:
+			cls._scores[token].zero()
 
 		cls.round += 1
 
@@ -150,21 +151,24 @@ class TokenStats:
 	"""
 	
 	# How history fades when computing the floating average
-	_fade = 0.65
+	_fade = 0.8
 
 	# If observation < threshold, do not compute scores
-	threshold = 7
+	threshold = 10 
+
+	# If a token has been observed < rounds_threshold times, we don't compute
+	# its score. We need more data about its history to be able to compute the
+	# score confidently.
+	rounds_threshold = 5
 
 	def __init__(self, round):
 		# Num of appearances in the last round
 		self.observation = 1
+		self.rounds_observed = 0
 		self.mean = 0.0
 		self.sqr_mean = 0.0
 		self.std = 0.0
 		self.score = 0.0
-
-		# flag that says: "This is the first round this token has been found"
-		self.first_time = True
 
 
 	def increase(self):			
@@ -176,6 +180,8 @@ class TokenStats:
 
 		http://stackoverflow.com/questions/787496/what-is-the-best-way-to-compute-trending-topics-or-tags/826509#826509 
 		"""
+		if self.observation > 0:
+			self.rounds_observed += 1
 
 		#TODO: Play with different _fade values
 		self.mean = self.mean * self._fade + \
@@ -186,20 +192,23 @@ class TokenStats:
 
 		self.std = sqrt(self.sqr_mean - self.mean **2 )
 
-		if self.std == 0:
-			self.score = (self.observation - self.mean) * float("infinity")
+		# Do I need to compute the score for this token?
+		if self.rounds_observed > self.rounds_threshold and \
+			self.observation > self.threshold:
+			compute = True
 		else:
-			self.score = (self.observation - self.mean) / self.std
+			compute = False
 
-		#	if self.observation < self.threshold:
-		#		self.score = 0.0
-
-		if self.first_time:
+		if compute:
+			# Compute the score
+			if self.std == 0:
+				self.score = (self.observation - self.mean) * float("infinity")
+			else:
+				self.score = (self.observation - self.mean) / self.std
+		else:
+			# Else set it to zero
 			self.score = 0.0
-			self.first_time = False
 
-		#		if self.mean < 3:
-		#		self.score = 0.0
 
 
 	def zero(self):
@@ -223,7 +232,7 @@ class TokenStats:
 
 
 	def __str__(self):
-		return "Observation: %s, Mean: %s, Std: %s, Score: %s" % (
-			self.observation, self.mean, self.std, self.score,
+		return "Observation: %s,Rounds observed: %s, Mean: %s, Std: %s, Score: %s" % (
+			self.observation, self.rounds_observed, self.mean, self.std, self.score,
 		)
  

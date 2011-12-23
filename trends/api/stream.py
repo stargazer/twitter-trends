@@ -88,7 +88,7 @@ class Tweet:
 	stopsigns = (
 		".", ",",":","?", ";", "!", "-", "_", "(", ")", "&", "*", "'", "`"
 	)
-	MIN_TOKEN_LENGTH = 3
+	MIN_TOKEN_LENGTH = 4
 	
 	def __init__(self, **kwargs):
 		self.text = kwargs.get('text', None)
