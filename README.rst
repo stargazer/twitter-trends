@@ -94,9 +94,9 @@ Diagram
        ----------------                             --------------------
         Listener Thread                             Statistician Thread
        ----------------                             --------------------
-          Stream   <-----------------+                      Stats
-                                     |                  
-                                     |
+          Stream   <-----------------+                    Statistician  
+                                     |                    Stats
+                                     |                    TokenStats
                                      |
                                      |
                                  Twitter API
