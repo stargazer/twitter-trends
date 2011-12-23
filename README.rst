@@ -41,13 +41,43 @@ Architecture
 
         * ``stream``: A ``Stream`` instance
 
-    * ``trends.analysis.listener.Collection``: Wrapper around the data
-      structure that will store token appearances in tweets.
+    * ``trends.analysis.statistician.Stats``: Wrapper class around the data
+      structure that will store token along with their statistics.
 
-        * ``_tokens``: Dictionary that stores pairs of `token`:`no. of
-          appearances`
+        * ``_scores``: Dictionary that stores pairs of `token`:`<TokenStats
+          object>`
 
-    * ``trends.analysis.statisticia.Statistician``: Analyzes the ``Collection`` and computes statistics.
+        * ``add(token)``: If no entry exists in dictionary ``_scores``
+          for key `token`, an entry is created. Else, it's updated.
+
+        * ``get_stats()``: Initiates the computation of stats for the tokens in
+          ``_scores``.
+
+    * ``trends.analysis.statistician.TokenStats``: Instances of this class maintain the statistics
+      that correspond to a single token.
+
+        * ``observation``: Observations of the token, within this round
+
+        * ``rounds_observed``: Amount of rounds that this token has been
+          observed at least once
+
+        * ``mean``: Floating mean.
+
+        * ``sqr_mean``: Floating square mean
+
+        * ``std``: Floating Standard deviation
+
+        * ``score``: Floating average z-score
+
+        * ``increase()``: Increases the amount of observations for the
+          corresponding token, by 1.      
+
+        * ``compute_scores()``: Computes the score and all the statistical
+          parameters.
+
+        * ``zero()``: Zeros parameters ``observation`` and ``score``
+
+    * ``trends.analysis.statistician.Statistician``: Analyzes the ``Stats`` class and computes statistics.
 
 
 Diagram
@@ -64,13 +94,12 @@ Diagram
        ----------------                             --------------------
         Listener Thread                             Statistician Thread
        ----------------                             --------------------
-          Stream   <-----------------+                  Collection 
-          Collection                 |                  
+          Stream   <-----------------+                      Stats
+                                     |                  
                                      |
                                      |
                                      |
                                  Twitter API
             
-
 
 
