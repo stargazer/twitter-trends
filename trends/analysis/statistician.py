@@ -15,18 +15,31 @@ class Statistician(threading.Thread):
 		print "Thread Statistician: Terminating"
 	
 	def work(self):
+		# TODO: Instead of calculating the scores every X seconds, I could also
+		# do it by:
+		# - Counting the tokens found per round
+		# - Calculate scores when tokesn reach a number X.
+		# Advantages: No waiting for long periods. I could wake up the thread
+		# every few seconds to check the size of the tokens of this round
+		# More accurate results. 
+		
+		# Count the stats whenever each round completes 50000 tokens 
+		PERIOD = 100000
+		cv = threading.Condition()
 
-		def refresh():
-			Stats.get_stats()
-	
+		def poll():
+			# Compute scores when the tokens found in this round are more than PERIOD
+			if Stats.tokens_this_round > PERIOD:
+				Stats.get_stats()
+
 		# As long as termination hasn't been asked
 		while not self.terminate_please.isSet():
-			cv = threading.Condition()
+			# Every 1 seconds, run poll()
 			cv.acquire()
-			cv.wait(180)
+			cv.wait(1)
 
-			refresh()
-			
+			poll()
+
 			cv.release()
  
 
@@ -38,6 +51,7 @@ class Stats:
 	
 	# Entries of the form:
 	# {<token>:  <token_stats>}
+	# TODO: Experiment with Redis, instead of using a dictionary
 	_scores = {}
 
 	# Round of observations
@@ -46,13 +60,22 @@ class Stats:
 	# Total tweets read
 	total_tweets = 0
 
+	# This counts all the tokens that have been found during one round. Not the
+	# distinc tokens. If a token has been found 10 times, here it will be
+	# counted 10 times. The goal of this is to be able to trigger the
+	# computation of the scores, when this attribute reaches a certain
+	# threshold. Then our means/stats will have sense.
+	tokens_this_round = 0
+
 	@classmethod
 	def add(cls, token):
 		"""
 		Increases the frequency of token ``token``
 		"""
+
 		token_stats = cls._scores.setdefault(token, TokenStats(cls.round))
 		token_stats.increase()
+		cls.tokens_this_round += 1
 
 	@classmethod
 	def get_stats(cls):
@@ -74,6 +97,16 @@ class Stats:
 		#   Play with the value.observation > <number>
 		#   Maybe trim the _scores dic periodically, and remove tokens with a
 		#   very low mean? (Does std have anything to do?)
+
+		# TODO:
+		# Output in file the hottest trends with their scores
+		# Instead of sorting the whole dictionary, why not just find the 20 max
+		# scores. find_max() should be O(n). 20 times this functions, still is
+		# O(n), compared to the fastest sort which is O(n^2)
+		#
+		# TODO: Print stats more nicely
+
+
 		from operator import itemgetter
 
 		# Here i take a snapshot of the dictionary _scores, in a list of pairs
@@ -81,20 +114,20 @@ class Stats:
 		items = cls._scores.items()
 		
 		print "Total Tweets read: %s" % cls.total_tweets
-		print "Number of distinct tokens: %s" % len(cls._scores)		
+		print "Tokens this round: %s" % cls.tokens_this_round
+		print "Total Distinct tokens: %s" % len(cls._scores)		
 		print "Computing Scores"
 		import time
 		start = time.time()
 		for token, stats in items:
 			cls._scores[token].compute_scores(cls.round)					
 		print "Time: %s" % (time.time() - start)
-		print "\n"
 
 		print "Sorting scores"
 		start = time.time()
 		_sorted = sorted(items, key=itemgetter(1), reverse=True)
 		print "Time: %s" % (time.time() - start)
-		print "\n"
+
 
 		"""
 		print "Cleaning up Token dictionary"
@@ -120,19 +153,19 @@ class Stats:
 		_sorted = sorted(temp_dict.items(), key=itemgetter(1), reverse=True)
 		print "Time: %s" % (time.time() - start)
 		"""
-		for token, stats in _sorted[:5]:
+		for token, stats in _sorted[:10]:
 			try:
-				print token
-				print stats
+				print token, "\t", stats
 			except:
 				pass
 			print "\n"
 
-		
 		# Zero the score and observation
 		for token, stats in items:
 			cls._scores[token].zero()
 
+		# Zero the counter for tokens of this round
+		cls.tokens_this_round = 0
 		cls.round += 1
 
 
@@ -154,12 +187,12 @@ class TokenStats:
 	_fade = 0.8
 
 	# If observation < threshold, do not compute scores
-	threshold = 10 
+	threshold = 25 
 
 	# If a token has been observed < rounds_threshold times, we don't compute
 	# its score. We need more data about its history to be able to compute the
 	# score confidently.
-	rounds_threshold = 5
+	rounds_threshold = 2 
 
 	def __init__(self, round):
 		# Num of appearances in the last round
